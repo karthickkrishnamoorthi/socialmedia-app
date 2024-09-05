@@ -6,7 +6,7 @@ import SessionWrapper from "@/components/SessionWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "social media clone",
+  title: "Connect Media ",
   description: "learn and build ",
 };
 
