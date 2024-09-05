@@ -15,7 +15,12 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
-import { addDoc, collection, getFirestore, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const Header = () => {
   const { data: session } = useSession();
@@ -80,14 +85,14 @@ const Header = () => {
   async function handleSubmit() {
     setUploadFullPost(true);
     const docRef = await addDoc(collection(db, "posts"), {
-      username : session?.user?.username,
+      username: session?.user?.username,
       story,
-      profile : session?.user?.image,
-      image : imageUrl,
-      timestamp : serverTimestamp(),
+      profile: session?.user?.image,
+      image: imageUrl,
+      timestamp: serverTimestamp(),
     });
-    setUploadFullPost(false)
-    setIsOpen(false)
+    setUploadFullPost(false);
+    setIsOpen(false);
   }
 
   return (
@@ -186,7 +191,11 @@ const Header = () => {
           />
           <button
             onClick={handleSubmit}
-            disabled= {!addImage || !story === '' || uploadFullPost || imageUploading ? true : false }
+            disabled={
+              !addImage || !story === "" || uploadFullPost || imageUploading
+                ? true
+                : false
+            }
             className="w-full bg-red-600 text-white p-2 rounder-lg shadow-md hover:brightness-105 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100"
           >
             upload Pic & post
