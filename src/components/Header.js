@@ -9,7 +9,13 @@ import { HiCamera } from "react-icons/hi";
 import { AiOutlineClose } from "react-icons/ai";
 import { getApp } from "firebase/app";
 import { app } from "../../firebase";
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { addDoc, collection, getFirestore, serverTimestamp } from "firebase/firestore";
 
 const Header = () => {
   const { data: session } = useSession();
@@ -18,9 +24,11 @@ const Header = () => {
   const [addImage, setAddImage] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const [uploadFullPost, setUploadFullPost] = useState(false);
   const imageSelectRef = useRef();
+  const db = getFirestore(app);
 
-  // console.log("1111", session, addImage, imageUrl);
+  console.log("1111", session, addImage, imageUrl);
 
   const handleStory = (e) => {
     let data = e.target.value;
@@ -40,33 +48,46 @@ const Header = () => {
     }
   }, [addImage]);
 
-  async function uploadImageToStorage(){
+  async function uploadImageToStorage() {
     setImageUploading(true);
     const storage = getStorage(app);
-    const fileName = new Date().getTime() + '-' + addImage?.name
-    const storageRef = ref(storage,fileName)
-    const uploadTask = uploadBytesResumable( storageRef, addImage)
+    const fileName = new Date().getTime() + "-" + addImage?.name;
+    const storageRef = ref(storage, fileName);
+    const uploadTask = uploadBytesResumable(storageRef, addImage);
     uploadTask.on(
-      'state_changed',
+      "state_changed",
       // check upload task progess value //
-      (snapshot)=>{
-        const progress = (snapshot.bytesTransferred/snapshot.totalBytes)*100
-        console.log('upload progress', progress ,'done')
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log("upload progress", progress, "done");
       },
-      (error)=>{
-        console.log(error),
-        setImageUploading(false);
+      (error) => {
+        console.log(error), setImageUploading(false);
         setAddImage(null);
         setImageUrl(null);
       },
       // download url//
-     ()=>{
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadUrl)=>{
-          setImageUrl(downloadUrl)
-          setImageUploading(false)
-        })
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadUrl) => {
+          setImageUrl(downloadUrl);
+          setImageUploading(false);
+        });
       }
-    )
+    );
+  }
+
+  async function handleSubmit() {
+    setUploadFullPost(true);
+    const docRef = await addDoc(collection(db, "posts"), {
+      username : session?.user?.username,
+      story,
+      profile : session?.user?.image,
+      image : imageUrl,
+      timestamp : serverTimestamp(),
+    });
+    setUploadFullPost(false)
+    setIsOpen(false)
   }
 
   return (
@@ -135,7 +156,9 @@ const Header = () => {
               <img
                 src={imageUrl}
                 alt="selected file"
-                className={`${imageUploading ? 'animate-pulse' : ''} w-full max-h-[215px] object-cover cursor-pointer`}
+                className={`${
+                  imageUploading ? "animate-pulse" : ""
+                } w-full max-h-[215px] object-cover cursor-pointer`}
                 onClick={() => setAddImage(null)}
               />
             ) : (
@@ -161,8 +184,12 @@ const Header = () => {
             // onClick={}
             onChange={handleStory}
           />
-          <button className="w-full bg-red-800 text-white p-2 rounder-lg shadow-md hover:brightness-105 cursor-pointer disabled:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100">
-            upload Pic
+          <button
+            onClick={handleSubmit}
+            disabled= {!addImage || !story === '' || uploadFullPost || imageUploading ? true : false }
+            className="w-full bg-red-600 text-white p-2 rounder-lg shadow-md hover:brightness-105 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100"
+          >
+            upload Pic & post
           </button>
           <AiOutlineClose
             onClick={() => setIsOpen(false)}
